@@ -4,12 +4,15 @@ name = "dagger_layout"
 version = "0.1.0"
 description = "A UI layouting library for dagger."
 keywords = [ "ui", "graphics", "layout", "layouting", "dagger" ]
+readme = "README.md"
+license = "GPL-3.0-or-later"
 
 # Rust Meta
 edition = "2021"
 
 # Author Meta
 authors = [ "Thomas Reddy <contact@thomasreddy.com>" ]
+repository = "https://github.com/standard-abstractions/dagger_layout"
 
 [dependencies]
 itertools = "0.13"
