@@ -1,63 +1,64 @@
 use super::*;
 
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub struct Geometry {
-	pub position: PixelSize,
-	pub size: PixelSize,
+pub struct Vertex {
+	position: Vec2<Physical>,
+}
 
-	pub draw_order: isize,
+impl Vertex {
+	pub fn from_position(position: Vec2<Physical>) -> Self { Self { position } }
+	pub fn from_x_and_y(x: Physical, y: Physical) -> Self { Self { position: Vec2::new(x, y) } }
+
+	pub fn to_screen_space(&self, screen_size: Vec2<Physical>) -> Self {
+		let mut position = self.position / screen_size * 2 - 1;
+		position.y *= -1;
+		Self { position }
+	}
+}
+
+#[derive(Clone, Copy, PartialEq, Default, Debug)]
+pub struct Quad {
+	vertices: [Vertex;4],
+}
+
+impl Quad {
+	pub fn from_vertices(vertices: [Vertex;4]) -> Self { Self { vertices } }
+	pub fn from_position_and_size(position: Vec2<Physical>, size: Vec2<Physical>) -> Self {
+		Self {
+			vertices: [
+				Vertex::from_position(position),
+				Vertex::from_x_and_y(position.x + size.x, position.y),
+				Vertex::from_x_and_y(position.x, position.y + size.y),
+				Vertex::from_position(position + size),
+			],
+		}
+	}
+
+	pub fn to_screen_space(&self, screen_size: Vec2<Physical>) -> Self {
+		Self {
+			vertices: self.vertices.iter().map(|v| v.to_screen_space(screen_size)).collect::<Vec<Vertex>>().try_into().unwrap(),
+		}
+	}
 }
 
 cfg_if::cfg_if! {
 	if #[cfg(feature = "glium")] {
-		use glium::{
-			backend::Facade,
-			VertexBuffer,
-		};
+		glium::implement_vertex!(Vertex, position);
 
-		#[derive(Clone, Copy, PartialEq, Default, Debug)]
-		pub struct GliumVertex {
-			pub position: [f32; 2],
-			pub color: [f32; 4],
-		}
-		glium::implement_vertex!(GliumVertex, position, color);
-		
-		impl GliumVertex {
-			pub fn screenspace(&self, screen_size: PixelSize) -> Self {
-				let mut position = Vec2::from(self.position) / screen_size.as_() * 2.0 - 1.0;
-				position.y *= -1.0;
-				Self {
-					position: position.into_array(),
-					color: self.color,
-				}
-			}
-		}
-		
-		impl Geometry {
-			pub fn quad(&self) -> [GliumVertex; 6] {
-				[
-					GliumVertex { position: self.position.as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-					GliumVertex { position: (self.position + (self.size.x, 0)).as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-					GliumVertex { position: (self.position + (0, self.size.y)).as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-		
-					GliumVertex { position: (self.position + (self.size.x, 0)).as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-					GliumVertex { position: (self.position + (0, self.size.y)).as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-					GliumVertex { position: (self.position + self.size).as_().into_array(), color: [1.0, 1.0, 1.0, 1.0] },
-				]
-			}
-		
-			pub fn create_vertex_buffer<F>(display: &F, screen_size: PixelSize, geometries: &Vec<Geometry>) -> VertexBuffer<GliumVertex>
-			where F: ?Sized + Facade{
-				let vertices: Vec<GliumVertex> = geometries
-					.iter()
-					.flat_map(|geometry| {
-						geometry.quad()
-							.iter()
-							.map(|vertex| vertex.screenspace(screen_size))
-							.collect::<Vec<GliumVertex>>()
-					})
-					.collect();
-				VertexBuffer::new(display, &vertices).unwrap()
+		impl Quad {
+			pub fn create_vertex_buffer<F>(display: &F, screen_size: Vec2<Physical>, quads: &Vec<Quad>) -> glium::VertexBuffer<Vertex>
+			where F: ?Sized + glium::Facade {
+				let vertices: Vec<Vertex> = quads.iter().flat_map(|quad| {
+					vec![
+						quad.vertices[0],
+						quad.vertices[1],
+						quad.vertices[2],
+						quad.vertices[1],
+						quad.vertices[2],
+						quad.vertices[3],
+					]
+				}).collect();
+				glium::VertexBuffer::new(display, &vertices).unwrap()
 			}
 		}
 	}

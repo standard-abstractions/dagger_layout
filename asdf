@@ -1,0 +1,66 @@
+/* Style States */
+Normal
+	- Applied when no other state is applied
+
+Hovered
+	- Applied when element is directly under the cursor
+
+Focused
+	- Applied when element is focused (via click, tab, etc.)
+
+Custom
+
+/* Style Attributes */
+[panel]
+	- size:					SizeConstraint[2] /* w h */
+	- padding:				SizeConstraint[4] /* L T R B */
+	- margin:				SizeConstraint[4] /* L T R B */
+
+	- color:				Color
+	- corner_radius:		SizeConstraint[4] /* NE SE SW NW */
+
+	- blur:					SizeConstraint[2]
+
+[border]
+	- thickness:				SizeConstraint[9] /* TL T TR R BR B BL L */
+	- color:					Color[9] /* TL T TR R BR B BL L */
+	- location:					Inner | Center | Outer
+
+[layout]
+	- self:				None | Flow | Positioned /* Positioned removes the element from flow */
+	- children_scheme:	None | Stacked /* Stacked only applies on elements that are in flow */
+
+[positioned] /* if layout.self == Positioned */
+	- coords:		SizeConstraint[2] /* x y */
+	- origin:		Parent | Screen
+
+[stacked]
+	- direction:		Row | Column /* if layout.children_scheme == Stacked */
+	- align_self:		Default | Top | Center | Bottom /* if parent.children_scheme == Stacked */
+	- align_children:	Top | Center | Bottom /* if child.self == Flow */
+
+/* Every animate attribute gets one of these (e.g. 'panel-color-transition', 'border-thickness-transition') */
+/* Inanimate attributes don't (theres no 'align-self-transition', etc.) */
+[*-transition]
+	- time:		Time
+	- easing:	EasingFunction	/* easings.net */
+
+- Implement Styling ( 4 days - 2 weeks)
+- Implement Text ( 2 - 4 days )
+- Implement Input ( <1 week )
+
+- Make the App ( 1 - 2 weeks )
+	- Database (SurrealDB)
+	- Server (Axum)
+	- UI (Dagger)
+
+- Test
+	- Make notes
+	- Publish notes (privacy)
+	- Read notes based on privacy
+	- Link between notes
+	- Page lists
+	- Fake Money
+
+- Server / Security Guy
+- Money Guy
