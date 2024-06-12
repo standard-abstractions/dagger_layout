@@ -40,27 +40,3 @@ impl Default for Attributes {
 		}
 	}
 }
-
-/*
-Length				Pixel | VW | VH
-LengthPercent			Length | PercentOfParent
-LengthPercentRemaining		LengthPercent | Remaining
-
-
-panel_size			Vec2 LengthPercentRemaining
-panel_color			Color
-panel_padding			Slice4 LengthPercent
-panel_margin			Slice4 LengthPercent
-
-corner_size			Slice4 Vec2 LengthPercent
-corner_type			Slice4 (Rectangle | Polygon(usize) | Circle)				default = Rectangle
-
-edge_border_thickness		Slice4 Length
-edge_border_color		Slice4 Color
-corner_border_thickness		Slice4 Length
-corner_border_color		Slice4 Color
-
-layout_self			None | Flow(alignment) | Positioned(origin, Vec2 LengthPercent)		default = Flow(inherit)
-layout_children			None | Stacked(direction, alignment, gap)					default = Stacked(row, center)
-
-*/
