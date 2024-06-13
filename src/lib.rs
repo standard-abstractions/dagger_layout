@@ -1,95 +1,40 @@
 pub mod attributes;
 pub mod geometry;
 pub mod layout;
+pub mod types;
 
-use vek::Vec2;
-type Slice4<T> = [T;4];
+use types::*;
+use vek::{Vec2, Vec4};
 
-type Physical = isize;
-type Abstract = f32;
-
-type Color = [f32;4];
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Distance {
-	Pixels(Physical),
+#[derive(Clone, PartialEq, Debug)]
+pub struct Node<T> {
+	pub data:			T,
+	pub children:		Vec<Node<T>>,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DistancePercent {
-	Pixels(Physical),
-	Percent(Abstract),
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DistancePercentRemaining {
-	Pixels(Physical),
-	Percent(Abstract),
-	Remaining(Abstract),
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DistancePercentRemainingAuto {
-	Pixels(Physical),
-	Percent(Abstract),
-	Remaining(Abstract),
-	Auto,
-}
-
-#[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub enum CornerType {
-	#[default]
-	Rectangle,
-	Polygon(usize),
-	Circle,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum LayoutSelf {
-	None,
-	Flow {
-		alignment:	Option<Alignment>,
-	},
-	Positioned {
-		position:	Vec2<DistancePercent>,
-		origin:		PositionedOrigin
-	},
-}
-impl Default for LayoutSelf { fn default() -> Self { Self::Flow { alignment: None } } }
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum LayoutChildren {
-	None,
-	Stacked {
-		direction:	StackedDirection,
-		alignment:	Alignment,
-		gap:		DistancePercent,
-	}
-}
-impl Default for LayoutChildren {
-	fn default() -> Self {
-		Self::Stacked { direction: StackedDirection::Row, alignment: Alignment::Top, gap: DistancePercent::Pixels(0) }
+impl<T> Node<T> {
+	pub fn new(data: T) -> Self {
+		Self { data, children: vec![] }
 	}
 }
 
-#[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub enum StackedDirection {
-	#[default]
-	Row,
-	Column,
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Context {
+	parent_size:		Vec2<Physical>,
+	remaining_space:	Vec2<Physical>,
+	remaining_children:	Vec2<usize>,
 }
 
-#[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub enum Alignment {
-	#[default]
-	Top,
-	Center,
-	Bottom,
+#[derive(Clone, PartialEq, Debug)]
+pub struct Element {
+	style: attributes::Style,
 }
 
-#[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub enum PositionedOrigin {
-	#[default]
-	Parent,
-	Screen,
+pub fn calculate_size(node: &Node<Element>, context: Context) -> Node<Vec2<Physical>> {
+	match node.data.style.get("normal").unwrap().layout_children {
+		layout::LayoutChildren::None => Node::new(Vec2::zero()),
+		layout::LayoutChildren::Stacked { direction, alignment, gap } => {
+			
+		},
+	}
 }
