@@ -25,16 +25,22 @@ pub struct Context {
 	remaining_children:	Vec2<usize>,
 }
 
+pub fn calculate_size
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Element {
 	style: attributes::Style,
 }
 
 pub fn calculate_size(node: &Node<Element>, context: Context) -> Node<Vec2<Physical>> {
-	match node.data.style.get("normal").unwrap().layout_children {
+	let style = 
+	match .layout_children {
 		layout::LayoutChildren::None => Node::new(Vec2::zero()),
 		layout::LayoutChildren::Stacked { direction, alignment, gap } => {
-			
+			let size = style.panel_size;
+			if let Some(min_size) = style.panel_min_size {
+				size = Vec2::max(size, min_size) // calc all but auto
+			}
 		},
 	}
 }

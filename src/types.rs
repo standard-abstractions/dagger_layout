@@ -31,6 +31,7 @@ pub enum DistancePercentRemainingAuto {
 	Percent(Abstract),
 	Remaining(Abstract),
 	Auto,
+	Calculate(Vec<Self>),
 }
 
 /* Style */
