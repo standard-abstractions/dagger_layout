@@ -25,13 +25,46 @@ pub enum DistancePercentRemaining {
 	Remaining(Abstract),
 }
 
+impl DistancePercentRemaining {
+	pub fn calculate(&self, parent_size: Physical, remaining_space: Physical, remaining_children: isize) -> Physical {
+		match self {
+			Self::Pixels(pixels) => *pixels,
+			Self::Percent(percent) => (*percent * parent_size as Abstract) as Physical,
+			Self::Remaining(remaining) => (*remaining * (remaining_space / remaining_children) as Abstract) as Physical,
+		}
+	}
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum DistancePercentRemainingAuto {
 	Pixels(Physical),
 	Percent(Abstract),
 	Remaining(Abstract),
 	Auto,
-	Calculate(Vec<Self>),
+}
+
+impl DistancePercentRemainingAuto {
+	pub fn is_auto(&self) -> bool {
+		match self {
+			Self::Auto => true,
+			_ => false,
+		}
+	}
+
+	pub fn non_auto_part(&self) -> DistancePercentRemaining {
+		match self {
+			Self::Pixels(pixels) => DistancePercentRemaining::Pixels(*pixels),
+			Self::Percent(percent) => DistancePercentRemaining::Percent(*percent),
+			Self::Remaining(remaining) => DistancePercentRemaining::Remaining(*remaining),
+			Self::Auto => panic!("Called non_auto_part on an Auto!"),
+		}
+	}
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum Scalar<T> {
+	Single(T),
+	Calculate(Vec<T>),
 }
 
 /* Style */

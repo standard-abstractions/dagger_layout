@@ -15,7 +15,7 @@ pub enum PositionedOrigin {
 	Screen,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum LayoutSelf {
 	None,
 	Flow {
@@ -40,7 +40,7 @@ pub enum StackedDirection {
 	Column,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum LayoutChildren {
 	None,
 	Stacked {
