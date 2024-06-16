@@ -59,6 +59,14 @@ impl DistancePercentRemainingAuto {
 			Self::Auto => panic!("Called non_auto_part on an Auto!"),
 		}
 	}
+
+	pub fn calculate(&self, context: Context, is_height: bool) -> Physical {
+		if is_height {
+			self.non_auto_part().calculate(context.parent_size.y, context.remaining_space.y, context.remaining_children.y)
+		} else {
+			self.non_auto_part().calculate(context.parent_size.x, context.remaining_space.x, context.remaining_children.x)
+		}
+	}
 }
 
 #[derive(Clone, PartialEq, Debug)]
