@@ -44,13 +44,25 @@ pub enum StackedDirection {
 pub enum LayoutChildren {
 	None,
 	Stacked {
-		direction:	StackedDirection,
+		is_column:	bool,
 		alignment:	Alignment,
-		gap:		DistancePercent,
+		gap:		Physical,
 	}
 }
-impl Default for LayoutChildren {
-	fn default() -> Self {
-		Self::Stacked { direction: StackedDirection::Row, alignment: Alignment::Top, gap: DistancePercent::Pixels(0) }
+impl LayoutChildren {
+	pub fn none() -> Self {
+		Self::None
+	}
+	pub fn row() -> Self {
+		Self::Stacked { is_column: false, alignment: Alignment::Top, gap: 0 }
+	}
+	pub fn column() -> Self {
+		Self::Stacked { is_column: true, alignment: Alignment::Top, gap: 0 }
+	}
+	pub fn with_gap(self, gap: Physical) -> Self {
+		match self {
+			Self::None => Self::None,
+			Self::Stacked { is_column, alignment, .. } => Self::Stacked { is_column, alignment, gap }
+		}
 	}
 }

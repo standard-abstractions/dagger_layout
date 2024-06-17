@@ -45,22 +45,9 @@ Custom
 	- time:		Time
 	- easing:	EasingFunction	/* easings.net */
 
+
+
+
 - Implement Styling ( 4 days - 2 weeks)
 - Implement Text ( 2 - 4 days )
 - Implement Input ( <1 week )
-
-- Make the App ( 1 - 2 weeks )
-	- Database (SurrealDB)
-	- Server (Axum)
-	- UI (Dagger)
-
-- Test
-	- Make notes
-	- Publish notes (privacy)
-	- Read notes based on privacy
-	- Link between notes
-	- Page lists
-	- Fake Money
-
-- Server / Security Guy
-- Money Guy

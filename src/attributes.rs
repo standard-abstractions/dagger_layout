@@ -17,9 +17,9 @@ pub struct Attributes {
 	pub corner_size:	Slice4<Vec2<DistancePercent>>,
 	pub corner_type:	Slice4<CornerType>,
 
-	pub edge_border_thickness:		Slice4<Distance>,
+	pub edge_border_thickness:		Slice4<Physical>,
 	pub edge_border_color:			Slice4<Color>,
-	pub corner_border_thickness:	Slice4<Distance>,
+	pub corner_border_thickness:	Slice4<Physical>,
 	pub corner_border_color:		Slice4<Color>,
 
 	pub layout_self:		layout::LayoutSelf,
@@ -27,6 +27,11 @@ pub struct Attributes {
 }
 
 impl Attributes {
+	pub fn panel_width(self, panel_width: DistancePercentRemainingAuto) -> Self { Self { panel_width, ..self } }
+	pub fn panel_height(self, panel_height: DistancePercentRemainingAuto) -> Self { Self { panel_height, ..self } }
+	pub fn panel_color(self, panel_color: Color) -> Self { Self { panel_color, ..self } }
+	pub fn layout_children(self, layout_children: layout::LayoutChildren) -> Self { Self { layout_children, ..self } }
+
 	pub fn in_flow(&self) -> bool {
 		match self.layout_self {
 			layout::LayoutSelf::Flow { .. } => true,
@@ -44,20 +49,20 @@ impl Default for Attributes {
 			panel_minimum_height: DistancePercentRemainingAuto::Pixels(0),
 			panel_maximum_width: DistancePercentRemainingAuto::Pixels(Physical::MAX),
 			panel_maximum_height: DistancePercentRemainingAuto::Pixels(Physical::MAX),
-			panel_padding: [DistancePercent::Pixels(0), DistancePercent::Pixels(0), DistancePercent::Pixels(0), DistancePercent::Pixels(0)],
-			panel_margin: [DistancePercent::Pixels(0), DistancePercent::Pixels(0), DistancePercent::Pixels(0), DistancePercent::Pixels(0)],
-			panel_color: Color::default(),
+			panel_padding: [DistancePercent::Pixels(0);4],
+			panel_margin: [DistancePercent::Pixels(0);4],
+			panel_color: Color::black(),
 
 			corner_size: [Vec2::new(DistancePercent::Pixels(0), DistancePercent::Pixels(0));4],
 			corner_type: [CornerType::default();4],
 
-			edge_border_thickness: [Distance::Pixels(0);4],
-			edge_border_color: [Color::default();4],
-			corner_border_thickness: [Distance::Pixels(0);4],
-			corner_border_color: [Color::default();4],
+			edge_border_thickness: [0;4],
+			edge_border_color: [Color::black();4],
+			corner_border_thickness: [0;4],
+			corner_border_color: [Color::black();4],
 
 			layout_self: layout::LayoutSelf::default(),
-			layout_children: layout::LayoutChildren::default(),
+			layout_children: layout::LayoutChildren::row(),
 		}
 	}
 }
