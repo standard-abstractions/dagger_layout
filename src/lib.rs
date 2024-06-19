@@ -14,17 +14,15 @@ pub struct Element {
 
 impl Element {
 	pub fn new() -> Self {
-		Self { styles: attributes::Style::new() }
+		Self { styles: attributes::Style::default() }
 	}
 
-	pub fn with_style(self, style: String, attributes: attributes::Attributes) -> Self {
-		let mut r = self.clone();
-		r.styles.insert(style, attributes);
-		r
+	pub fn with_normal(self, attributes: attributes::Attributes) -> Self {
+		Self { styles: attributes::Style { normal: attributes, ..self.styles } }
 	}
 	
-	pub fn get_style(&self) -> attributes::Attributes {
-		self.styles.get("normal").cloned().unwrap()
+	pub fn get_style(&self) -> &attributes::Attributes {
+		&self.styles.normal
 	}
 }
 
@@ -73,22 +71,26 @@ impl SizeCalculationContext {
 impl Node<Element> {
 	pub fn calculate_sizes(&self, context: SizeCalculationContext) -> Node<Vec2<Physical>> {
 		let style = self.data.get_style();
+		let horizontal_padding = style.panel_padding[1].calculate(context.parent_size.x) + style.panel_padding[3].calculate(context.parent_size.x);
+		let vertical_padding = style.panel_padding[0].calculate(context.parent_size.y) + style.panel_padding[2].calculate(context.parent_size.y);
+		let padding = Vec2::new(horizontal_padding, vertical_padding);
 	
 		let minimum_width_offset = style.panel_minimum_width.calculate(context, false);
 		let minimum_height_offset = style.panel_minimum_height.calculate(context, true);
 		let maximum_width_offset = style.panel_maximum_width.calculate(context, false);
 		let maximum_height_offset = style.panel_maximum_height.calculate(context, true);
-		let ideal_width_offset = style.panel_width.calculate(context, false).clamp(minimum_width_offset, maximum_width_offset);
-		let ideal_height_offset = style.panel_height.calculate(context, true).clamp(minimum_height_offset, maximum_height_offset);
+		let ideal_width_offset = (style.panel_width.calculate(context, false)).clamp(minimum_width_offset, maximum_width_offset);
+		let ideal_height_offset = (style.panel_height.calculate(context, true)).clamp(minimum_height_offset, maximum_height_offset);
 	
-		let mut children = vec![];
 		let children_count = self.children.len();
+		let mut children = Vec::with_capacity(children_count);
 		
 		let auto_size: Vec2<Physical> = match style.layout_children {
 			layout::LayoutChildren::None => Vec2::zero(),
 			layout::LayoutChildren::Stacked { is_column, gap, .. } => {
 				let mut total_size = Vec2::zero();
 
+				let parent_size = Vec2::new(ideal_width_offset, ideal_height_offset) - padding;
 				for (index, child) in self.children.iter().enumerate() {
 					let remaining_children = if is_column {
 						Vec2::new(1, (children_count - index) as isize)
@@ -96,23 +98,25 @@ impl Node<Element> {
 						Vec2::new((children_count - index) as isize, 1)
 					};
 
-					let context = SizeCalculationContext {
-						parent_size: Vec2::new(ideal_width_offset, ideal_height_offset),
-						remaining_space: if is_column {
-							Vec2::new(ideal_width_offset, ideal_height_offset) - (0, total_size.y) - (0, gap * (remaining_children.y - 1))
-						} else {
-							Vec2::new(ideal_width_offset, ideal_height_offset) - (total_size.x, 0) - (gap * (remaining_children.x - 1), 0)
-						},
-						remaining_children,
+					let remaining_space = parent_size - if is_column {
+						(0, (gap * (remaining_children.y - 1)) + total_size.y)
+					} else {
+						((gap * (remaining_children.x - 1)) + total_size.x, 0)
 					};
 
-					let child_size = child.calculate_sizes(context);
+					let child_size = child.calculate_sizes(SizeCalculationContext {
+						parent_size,
+						remaining_space,
+						remaining_children,
+					});
+
 					if child.data.get_style().in_flow() {
 						total_size += child_size.data;
-						if index < children_count {
+						if index < children_count - 1 {
 							total_size += gap;
 						}
 					}
+
 					children.push(child_size);
 				}
 	
@@ -132,20 +136,19 @@ impl Node<Element> {
 			Vec2::new(minimum_width, minimum_height),
 			Vec2::new(maximum_width, maximum_height),
 		);
-		println!("{:?}", size);
 		Node::new(size).with_children(children)
 	}
 
 	pub fn calculate_positions(&self, sizes: &Node<Vec2<Physical>>, current_position: Vec2<Physical>) -> Node<Vec2<Physical>> {
 		let style = self.data.get_style();
 
-		let mut children = vec![];
 		let children_count = self.children.len();
+		let mut children = Vec::with_capacity(children_count);
 
 		match style.layout_children {
 			layout::LayoutChildren::None => {},
 			layout::LayoutChildren::Stacked { is_column, gap, .. } => {
-				let mut next_position = Vec2::zero();
+				let mut next_position = Vec2::new(style.panel_padding[1].calculate(sizes.data.x), style.panel_padding[0].calculate(sizes.data.y));
 				for (index, (child, size)) in self.children.iter().zip(sizes.children.iter()).enumerate() {
 					children.push(child.calculate_positions(size, current_position + next_position));
 					
@@ -171,16 +174,15 @@ impl Node<Element> {
 	fn impl_calculate_geometries(&self, sizes: &Node<Vec2<Physical>>, positions: &Node<Vec2<Physical>>) -> Node<geometry::Geometry> {
 		let style = self.data.get_style();
 
-		let mut children = vec![];
-
-		for ((child, size), position) in self.children.iter().zip(sizes.children.iter()).zip(positions.children.iter()) {
-			children.push(child.impl_calculate_geometries(size, position));
-		}
+		let children = self.children.iter()
+			.zip(sizes.children.iter().zip(positions.children.iter()))
+			.map(|(child, (size, position))| child.impl_calculate_geometries(size, position))
+			.collect();
 
 		let geometry = geometry::Geometry {
 			panel_position: positions.data,
 			panel_size: sizes.data,
-			panel_color: style.panel_color,
+			panel_background: style.panel_background,
 			corner_size: style.corner_size,
 			corner_type: style.corner_type,
 			edge_border_thickness: style.edge_border_thickness,
@@ -195,7 +197,6 @@ impl Node<Element> {
 	pub fn calculate_geometries(&self, context: SizeCalculationContext) -> Node<geometry::Geometry> {
 		let sizes = self.calculate_sizes(context);
 		let positions = self.calculate_positions(&sizes, Vec2::zero());
-
 		self.impl_calculate_geometries(&sizes, &positions)
 	}
 }

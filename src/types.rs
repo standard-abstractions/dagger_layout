@@ -68,7 +68,7 @@ pub enum Scalar<T> {
 pub struct Color(Vec4<u8>);
 impl Color {
 	pub fn rgba(rgba: Vec4<u8>) -> Self { Self(rgba) }
-	pub fn rgb(rgb: Vec3<u8>) -> Self { Self(Vec4::from(rgb)) }
+	pub fn rgb(rgb: Vec3<u8>) -> Self { Self(Vec4::new(rgb.x, rgb.y, rgb.z, 255)) }
 	pub fn null() -> Self { Self(Vec4::zero()) }
 	pub fn black() -> Self { Self(Vec4::new(0, 0, 0, 255)) }
 	pub fn white() -> Self { Self(Vec4::new(255, 255, 255, 255)) }
@@ -80,4 +80,10 @@ cfg_if::cfg_if! {
 	if #[cfg(feature = "glium")] {
 		impl Color { pub fn to_glium(&self) -> [f32;4] { (self.0.as_() / 255.0).into_array() } }
 	}
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum Background {
+	Color(Color),
+	Image(i32),
 }

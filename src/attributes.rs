@@ -1,18 +1,21 @@
 use super::*;
 
-pub type Style = std::collections::HashMap<String, Attributes>;
+#[derive(Clone, PartialEq, Default, Debug)]
+pub struct Style {
+	pub normal: Attributes,
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Attributes {
-	pub panel_width:		DistancePercentRemainingAuto,
-	pub panel_height:		DistancePercentRemainingAuto,
+	pub panel_width:			DistancePercentRemainingAuto,
+	pub panel_height:			DistancePercentRemainingAuto,
 	pub panel_minimum_width:	DistancePercentRemainingAuto,
 	pub panel_minimum_height:	DistancePercentRemainingAuto,
 	pub panel_maximum_width:	DistancePercentRemainingAuto,
 	pub panel_maximum_height:	DistancePercentRemainingAuto,
-	pub panel_padding:		Slice4<DistancePercent>,
-	pub panel_margin:		Slice4<DistancePercent>,
-	pub panel_color:		Color,
+	pub panel_padding:			Slice4<DistancePercent>,
+	pub panel_margin:			Slice4<DistancePercent>,
+	pub panel_background:		Background,
 
 	pub corner_size:	Slice4<Vec2<DistancePercent>>,
 	pub corner_type:	Slice4<CornerType>,
@@ -29,7 +32,8 @@ pub struct Attributes {
 impl Attributes {
 	pub fn panel_width(self, panel_width: DistancePercentRemainingAuto) -> Self { Self { panel_width, ..self } }
 	pub fn panel_height(self, panel_height: DistancePercentRemainingAuto) -> Self { Self { panel_height, ..self } }
-	pub fn panel_color(self, panel_color: Color) -> Self { Self { panel_color, ..self } }
+	pub fn panel_padding(self, panel_padding: Slice4<DistancePercent>) -> Self { Self { panel_padding, ..self } }
+	pub fn panel_background(self, panel_background: Background) -> Self { Self { panel_background, ..self } }
 	pub fn layout_children(self, layout_children: layout::LayoutChildren) -> Self { Self { layout_children, ..self } }
 
 	pub fn in_flow(&self) -> bool {
@@ -51,7 +55,7 @@ impl Default for Attributes {
 			panel_maximum_height: DistancePercentRemainingAuto::Pixels(Physical::MAX),
 			panel_padding: [DistancePercent::Pixels(0);4],
 			panel_margin: [DistancePercent::Pixels(0);4],
-			panel_color: Color::black(),
+			panel_background: Background::Color(Color::null()),
 
 			corner_size: [Vec2::new(DistancePercent::Pixels(0), DistancePercent::Pixels(0));4],
 			corner_type: [CornerType::default();4],

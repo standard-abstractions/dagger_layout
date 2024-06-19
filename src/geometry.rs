@@ -4,7 +4,7 @@ use super::*;
 pub struct Geometry {
 	pub panel_position: 	Vec2<Physical>,
 	pub panel_size: 		Vec2<Physical>,
-	pub panel_color:		Color,
+	pub panel_background:	Background,
 
 	pub corner_size:	Slice4<Vec2<DistancePercent>>,
 	pub corner_type:	Slice4<attributes::CornerType>,
@@ -16,17 +16,17 @@ pub struct Geometry {
 }
 
 impl Geometry {
-	pub fn quad(&self) -> Vec<Vertex> {
-		vec![
+	pub fn quad(&self) -> [Vertex;6] {
+		[
 			// Triangle 1
-			Vertex::new(self.panel_position, self.panel_color),
-			Vertex::new(self.panel_position + (0, self.panel_size.y), self.panel_color),
-			Vertex::new(self.panel_position + (self.panel_size.x, 0), self.panel_color),
+			Vertex::new(self.panel_position, self.panel_background, [0.0, 0.0]),
+			Vertex::new(self.panel_position + (0, self.panel_size.y), self.panel_background, [0.0, 1.0]),
+			Vertex::new(self.panel_position + self.panel_size, self.panel_background, [1.0, 1.0]),
 
 			// Triangle 2
-			Vertex::new(self.panel_position + (0, self.panel_size.y), self.panel_color),
-			Vertex::new(self.panel_position + (self.panel_size.x, 0), self.panel_color),
-			Vertex::new(self.panel_position + self.panel_size, self.panel_color),
+			Vertex::new(self.panel_position, self.panel_background, [0.0, 0.0]),
+			Vertex::new(self.panel_position + (self.panel_size.x, 0), self.panel_background, [1.0, 0.0]),
+			Vertex::new(self.panel_position + self.panel_size, self.panel_background, [1.0, 1.0]),
 		]
 	}
 }
@@ -40,16 +40,15 @@ cfg_if::cfg_if! {
 
 		impl Geometry {
 			pub fn create_vb_simple_quads<F>(display: &F, screen_size: Vec2<Physical>, geometries: &Vec<Geometry>) -> VertexBuffer<GliumVertex>
-			where F: ?Sized + Facade{
-				let vertices: Vec<GliumVertex> = geometries
-					.iter()
-					.flat_map(|geometry| {
-						geometry.quad()
-							.iter()
-							.map(|vertex| GliumVertex::from(vertex.clone()).to_screen_space(screen_size))
-							.collect::<Vec<GliumVertex>>()
-					})
-					.collect::<Vec<GliumVertex>>();
+			where F: ?Sized + Facade {
+				let mut vertices: Vec<GliumVertex> = Vec::with_capacity(geometries.len() * 6);
+
+				for geometry in geometries {
+					for vertex in geometry.quad().iter() {
+						vertices.push(GliumVertex::from(*vertex).to_screen_space(screen_size));
+					}
+				}
+
 				VertexBuffer::new(display, &vertices).unwrap()
 			}
 		}
@@ -59,11 +58,12 @@ cfg_if::cfg_if! {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vertex {
 	position: 	Vec2<Physical>,
-	color:		Color,
+	background:	Background,
+	tex_coords: [Abstract;2],
 }
 
 impl Vertex {
-	pub fn new(position: Vec2<Physical>, color: Color) -> Self { Self { position, color } }
+	pub fn new(position: Vec2<Physical>, background: Background, tex_coords: [Abstract;2]) -> Self { Self { position, background, tex_coords } }
 }
 
 cfg_if::cfg_if! {
@@ -71,9 +71,11 @@ cfg_if::cfg_if! {
 		#[derive(Clone, Copy, PartialEq, Debug)]
 		pub struct GliumVertex {
 			position: 	[Abstract;2],
+			tex_coords: [Abstract;2],
+			tex_id:		i32,
 			color:		[f32;4],
 		}
-		glium::implement_vertex!(GliumVertex, position, color);
+		glium::implement_vertex!(GliumVertex, position, tex_coords, tex_id, color);
 
 		impl GliumVertex {
 			fn to_screen_space(&self, screen_size: Vec2<Physical>) -> Self {
@@ -81,6 +83,8 @@ cfg_if::cfg_if! {
 				position.y *= -1.0;
 				Self {
 					position: position.into_array(),
+					tex_coords: self.tex_coords,
+					tex_id: self.tex_id,
 					color: self.color,
 				}
 			}
@@ -90,9 +94,18 @@ cfg_if::cfg_if! {
 			fn from(value: Vertex) -> Self {
 				Self {
 					position: value.position.as_().into_array(),
-					color: value.color.to_glium(),
+					tex_coords: value.tex_coords,
+					tex_id: match value.background {
+						Background::Color(_) => 0,
+						Background::Image(id) => id,
+					},
+					color: match value.background {
+						Background::Color(color) => color.to_glium(),
+						Background::Image(_) => Color::white().to_glium(),
+					},
 				}
 			}
 		}
 	}
 }
+
