@@ -4,7 +4,8 @@ use super::*;
 pub struct Geometry {
 	pub panel_position: 	Vec2<Physical>,
 	pub panel_size: 		Vec2<Physical>,
-	pub panel_background:	Background,
+	pub panel_color:		Color,
+	pub panel_background:	Option<u32>,
 
 	pub corner_size:	Slice4<Vec2<DistancePercent>>,
 	pub corner_type:	Slice4<attributes::CornerType>,
@@ -19,14 +20,14 @@ impl Geometry {
 	pub fn quad(&self) -> [Vertex;6] {
 		[
 			// Triangle 1
-			Vertex::new(self.panel_position, self.panel_background, [0.0, 0.0]),
-			Vertex::new(self.panel_position + (0, self.panel_size.y), self.panel_background, [0.0, 1.0]),
-			Vertex::new(self.panel_position + self.panel_size, self.panel_background, [1.0, 1.0]),
-
+			Vertex::new(self.panel_position, self.panel_color, self.panel_background, [0.0, 0.0]),
+			Vertex::new(self.panel_position + (0, self.panel_size.y), self.panel_color, self.panel_background, [0.0, 1.0]),
+			Vertex::new(self.panel_position + self.panel_size, self.panel_color, self.panel_background, [1.0, 1.0]),
+			
 			// Triangle 2
-			Vertex::new(self.panel_position, self.panel_background, [0.0, 0.0]),
-			Vertex::new(self.panel_position + (self.panel_size.x, 0), self.panel_background, [1.0, 0.0]),
-			Vertex::new(self.panel_position + self.panel_size, self.panel_background, [1.0, 1.0]),
+			Vertex::new(self.panel_position, self.panel_color, self.panel_background, [0.0, 0.0]),
+			Vertex::new(self.panel_position + (self.panel_size.x, 0), self.panel_color, self.panel_background, [1.0, 0.0]),
+			Vertex::new(self.panel_position + self.panel_size, self.panel_color, self.panel_background, [1.0, 1.0]),
 		]
 	}
 }
@@ -58,24 +59,25 @@ cfg_if::cfg_if! {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vertex {
 	position: 	Vec2<Physical>,
-	background:	Background,
-	tex_coords: [Abstract;2],
+	color:		Color,
+	background_texture_id:	Option<u32>,
+	background_texture_uv:	[Abstract;2],
 }
 
 impl Vertex {
-	pub fn new(position: Vec2<Physical>, background: Background, tex_coords: [Abstract;2]) -> Self { Self { position, background, tex_coords } }
+	pub fn new(position: Vec2<Physical>, color: Color, background_texture_id: Option<u32>, background_texture_uv: [Abstract;2]) -> Self { Self { position, color, background_texture_id, background_texture_uv } }
 }
 
 cfg_if::cfg_if! {
 	if #[cfg(feature = "glium")] {
 		#[derive(Clone, Copy, PartialEq, Debug)]
 		pub struct GliumVertex {
-			position: 	[Abstract;2],
-			tex_coords: [Abstract;2],
-			tex_id:		i32,
-			color:		[f32;4],
+			position: 		[Abstract;2],
+			texture_uvs: 	[Abstract;2],
+			texture_id:		[u32;2],
+			color:			[f32;4],
 		}
-		glium::implement_vertex!(GliumVertex, position, tex_coords, tex_id, color);
+		glium::implement_vertex!(GliumVertex, position, color, texture_id, texture_uvs);
 
 		impl GliumVertex {
 			fn to_screen_space(&self, screen_size: Vec2<Physical>) -> Self {
@@ -83,9 +85,9 @@ cfg_if::cfg_if! {
 				position.y *= -1.0;
 				Self {
 					position: position.into_array(),
-					tex_coords: self.tex_coords,
-					tex_id: self.tex_id,
 					color: self.color,
+					texture_id: self.texture_id,
+					texture_uvs: self.texture_uvs,
 				}
 			}
 		}
@@ -94,15 +96,12 @@ cfg_if::cfg_if! {
 			fn from(value: Vertex) -> Self {
 				Self {
 					position: value.position.as_().into_array(),
-					tex_coords: value.tex_coords,
-					tex_id: match value.background {
-						Background::Color(_) => 0,
-						Background::Image(id) => id,
-					},
-					color: match value.background {
-						Background::Color(color) => color.to_glium(),
-						Background::Image(_) => Color::white().to_glium(),
-					},
+					color: value.color.to_glium(),
+					texture_id: [
+						value.background_texture_id.is_some() as u32,
+						value.background_texture_id.unwrap_or(0),
+					],
+					texture_uvs: value.background_texture_uv,
 				}
 			}
 		}

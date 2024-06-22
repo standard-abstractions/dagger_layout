@@ -81,9 +81,3 @@ cfg_if::cfg_if! {
 		impl Color { pub fn to_glium(&self) -> [f32;4] { (self.0.as_() / 255.0).into_array() } }
 	}
 }
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Background {
-	Color(Color),
-	Image(i32),
-}

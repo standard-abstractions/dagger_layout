@@ -182,6 +182,7 @@ impl Node<Element> {
 		let geometry = geometry::Geometry {
 			panel_position: positions.data,
 			panel_size: sizes.data,
+			panel_color: style.panel_color,
 			panel_background: style.panel_background,
 			corner_size: style.corner_size,
 			corner_type: style.corner_type,
